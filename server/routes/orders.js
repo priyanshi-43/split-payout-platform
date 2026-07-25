@@ -105,4 +105,30 @@ router.get('/debug/orders', async (req, res) => {
   const allOrders = await Order.find({});
   res.json(allOrders);
 });
+router.post('/:id/refund-item', async (req, res) => {
+  try {
+    const { vendorId, refundAmount } = req.body;
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    const transaction = await Transaction.findOne({ orderId: order._id });
+    if (!transaction) return res.status(404).json({ error: 'Transaction not found for this order' });
+
+    const payout = await Payout.findOne({ transactionId: transaction._id, vendorId });
+    if (!payout) return res.status(404).json({ error: 'Payout not found for this vendor' });
+
+    payout.amount = payout.amount - refundAmount;
+    if (payout.status === 'succeeded') {
+      payout.status = 'reversed';
+    }
+    await payout.save();
+
+    order.status = 'partially_refunded';
+    await order.save();
+
+    res.json({ message: 'Refund processed for this vendor only', order, updatedPayout: payout });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 module.exports = router;
