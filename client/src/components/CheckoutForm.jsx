@@ -7,11 +7,13 @@ function CheckoutForm() {
   const [price, setPrice] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [order, setOrder] = useState(null);
+  const [transaction, setTransaction] = useState(null);
   const [error, setError] = useState('');
 
   const handleCheckout = async (e) => {
     e.preventDefault();
     setError('');
+    setTransaction(null);
     try {
       const res = await axios.post('http://localhost:5000/api/orders/checkout', {
         customerEmail: 'test@test.com',
@@ -22,6 +24,18 @@ function CheckoutForm() {
       setOrder(res.data);
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong');
+    }
+  };
+
+  const handlePay = async () => {
+    setError('');
+    try {
+      await axios.post(`http://localhost:5000/api/orders/${order._id}/pay`);
+      const confirmRes = await axios.post(`http://localhost:5000/api/orders/${order._id}/confirm-payment`);
+      setTransaction(confirmRes.data.transaction);
+      setOrder(confirmRes.data.order);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Payment failed');
     }
   };
 
@@ -37,11 +51,28 @@ function CheckoutForm() {
       </form>
 
       {error && <p style={{ color: 'red' }}>{error}</p>}
+
       {order && (
         <div style={{ marginTop: '20px' }}>
           <h3>Order Created</h3>
           <p>Order ID: {order._id}</p>
           <p>Total Amount: ₹{order.totalAmount}</p>
+          <p>Status: {order.status}</p>
+          {order.status === 'pending' && (
+            <button onClick={handlePay}>Pay Now</button>
+          )}
+        </div>
+      )}
+
+      {transaction && (
+        <div style={{ marginTop: '20px', border: '1px solid #ccc', padding: '10px' }}>
+          <h3>Split Breakdown</h3>
+          {transaction.breakdown.map((line, i) => (
+            <div key={i} style={{ marginBottom: '10px' }}>
+              <p>Vendor: {line.vendorId}</p>
+              <p>Gross: ₹{line.grossAmount} | Fee: ₹{line.platformFee} | Tax: ₹{line.taxAmount} | Net Payout: ₹{line.netPayout}</p>
+            </div>
+          ))}
         </div>
       )}
     </div>

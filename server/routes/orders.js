@@ -1,3 +1,4 @@
+const payoutQueue = require('../queues/payoutQueue');
 const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
@@ -93,10 +94,19 @@ router.patch('/:id/deliver', async (req, res) => {
     order.status = 'delivered';
     await order.save();
 
-    // In the next phase, this is where we'll trigger actual payout release via a queue
-    const payouts = await Payout.find({ vendorId: { $in: order.items.map(i => i.vendorId) } });
+    // Find all pending payouts tied to this order's transaction
+    const transaction = await Transaction.findOne({ orderId: order._id });
+    const payouts = await Payout.find({ transactionId: transaction._id, status: 'pending' });
 
-    res.json({ message: 'Order marked delivered — payouts ready for release', order });
+    // Push each payout as a job into the queue instead of processing immediately
+    for (const payout of payouts) {
+      await payoutQueue.add('process-payout', { payoutId: payout._id.toString() }, {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 }
+      });
+    }
+
+    res.json({ message: 'Order marked delivered — payouts queued for release', order, queuedPayouts: payouts.length });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
