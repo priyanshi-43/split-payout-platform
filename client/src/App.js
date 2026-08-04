@@ -1,5 +1,6 @@
 import CheckoutForm from './components/CheckoutForm';
 import VendorDashboard from './components/VendorDashboard';
+import AdminDashboard from './components/AdminDashboard';
 
 function App() {
   return (
@@ -7,6 +8,7 @@ function App() {
       <h1>Split Payout Platform</h1>
       <CheckoutForm />
       <VendorDashboard />
+      <AdminDashboard />
     </div>
   );
 }

@@ -141,4 +141,37 @@ router.post('/:id/refund-item', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+router.get('/admin/stats', async (req, res) => {
+  try {
+    const totalFeesResult = await Transaction.aggregate([
+      { $group: { _id: null, sum: { $sum: '$totalPlatformFee' } } }
+    ]);
+    const totalTaxResult = await Transaction.aggregate([
+      { $group: { _id: null, sum: { $sum: '$totalTax' } } }
+    ]);
+    const totalOrders = await Order.countDocuments();
+    const paidOrders = await Order.countDocuments({ status: 'paid' });
+    const deliveredOrders = await Order.countDocuments({ status: 'delivered' });
+
+    const failedPayouts = await Payout.find({ status: 'failed' });
+    const pendingPayouts = await Payout.find({ status: 'pending' });
+    const succeededPayouts = await Payout.find({ status: 'succeeded' });
+
+    res.json({
+      totalPlatformFees: totalFeesResult[0]?.sum || 0,
+      totalTaxCollected: totalTaxResult[0]?.sum || 0,
+      totalOrders,
+      paidOrders,
+      deliveredOrders,
+      payoutSummary: {
+        failed: failedPayouts.length,
+        pending: pendingPayouts.length,
+        succeeded: succeededPayouts.length
+      },
+      failedPayouts
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 module.exports = router;
