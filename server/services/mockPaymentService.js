@@ -15,6 +15,9 @@ function confirmPayment(paymentIntentId) {
 }
 
 function createTransfer(amount, destinationVendorId) {
+  if (Math.random() < 0.1) {
+    throw new Error('Simulated transfer failure — insufficient balance');
+  }
   return {
     id: `tr_mock_${Date.now()}`,
     amount,
@@ -22,7 +25,6 @@ function createTransfer(amount, destinationVendorId) {
     status: 'succeeded'
   };
 }
-
 function createReversal(transferId, amount) {
   return { id: `trr_mock_${Date.now()}`, transferId, amount, status: 'succeeded' };
 }
