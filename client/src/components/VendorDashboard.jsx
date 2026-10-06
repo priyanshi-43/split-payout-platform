@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { API_URL } from '../config';
 
 function VendorDashboard() {
   const [vendorId, setVendorId] = useState('');
@@ -13,7 +14,7 @@ function VendorDashboard() {
     setData(null);
     setLoading(true);
     try {
-      const res = await axios.get(`http://localhost:5000/api/vendors/${vendorId}/payouts`);
+     const res = await axios.get(`${API_URL}/api/vendors/${vendorId}/payouts`);
       setData(res.data);
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong');

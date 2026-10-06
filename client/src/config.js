@@ -1,0 +1,1 @@
+export const API_URL = 'https://split-payout-api.onrender.com';

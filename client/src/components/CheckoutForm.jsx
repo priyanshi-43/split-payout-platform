@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { API_URL } from '../config';
 
 function CheckoutForm() {
   const [vendorId, setVendorId] = useState('');
@@ -18,7 +19,7 @@ function CheckoutForm() {
     setTransaction(null);
     setLoading(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/orders/checkout', {
+     const res = await axios.post(`${API_URL}/api/orders/checkout`, {
         customerEmail: 'test@test.com',
         items: [{ vendorId, productName, price: Number(price), quantity: Number(quantity) }]
       });
@@ -34,8 +35,9 @@ function CheckoutForm() {
     setError('');
     setLoading(true);
     try {
-      await axios.post(`http://localhost:5000/api/orders/${order._id}/pay`);
-      const confirmRes = await axios.post(`http://localhost:5000/api/orders/${order._id}/confirm-payment`);
+      await axios.post(`${API_URL}/api/orders/${order._id}/pay`);
+const confirmRes = await axios.post(`${API_URL}/api/orders/${order._id}/confirm-payment`);
+      
       setTransaction(confirmRes.data.transaction);
       setOrder(confirmRes.data.order);
     } catch (err) {

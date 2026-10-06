@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { API_URL } from '../config';
 
 function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/orders/admin/stats')
+   axios.get(`${API_URL}/api/orders/admin/stats`)
       .then(res => setStats(res.data))
       .catch(err => setError(err.response?.data?.error || 'Failed to load'));
   }, []);
